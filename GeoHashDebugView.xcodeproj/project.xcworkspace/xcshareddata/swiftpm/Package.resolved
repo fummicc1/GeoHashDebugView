@@ -1,0 +1,15 @@
+{
+  "originHash" : "240343e6a7819228749a3659ccf8c8bf82f4258e50baa45e6880d92b038e773d",
+  "pins" : [
+    {
+      "identity" : "geohashswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/fummicc1/GeoHashSwift",
+      "state" : {
+        "branch" : "main",
+        "revision" : "566aa9b051cb05d8262083048e66d71e5188d7b6"
+      }
+    }
+  ],
+  "version" : 3
+}
