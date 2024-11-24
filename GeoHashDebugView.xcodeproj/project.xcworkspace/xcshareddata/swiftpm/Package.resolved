@@ -7,7 +7,16 @@
       "location" : "https://github.com/fummicc1/GeoHashSwift",
       "state" : {
         "branch" : "main",
-        "revision" : "b95d735062ff75462bb4d267867ca84feae302a1"
+        "revision" : "caee0dcb2f8b1a91db82526b1e00ff353f72e839"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser",
+      "state" : {
+        "revision" : "41982a3656a71c768319979febd796c6fd111d5c",
+        "version" : "1.5.0"
       }
     }
   ],

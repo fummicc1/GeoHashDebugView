@@ -12,26 +12,33 @@ import GeoHashFramework
 
 struct ContentView: View {
     @State var bitsLength: Int = 10
-    @State private var region = MapCameraPosition.region(
+    @State private var cameraPosition = MapCameraPosition.region(
         MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
+            // Tokyo Station in Japan
+            center: CLLocationCoordinate2D(
+                latitude: 35.681382,
+                longitude: 139.766084
+            ),
             span: MKCoordinateSpan(latitudeDelta: 360, longitudeDelta: 360)
         )
     )
-    
-    var bounds: [[CLLocationCoordinate2D]] {
-        GeoHash.getBounds(with: .exact(digits: bitsLength)).map {
-            $0.map { coord in
-                CLLocationCoordinate2D(
-                    latitude: coord.latitude,
-                    longitude: coord.longitude
-                )
-            }
-        }
-    }
+
+    @State private var bounds: [[CLLocationCoordinate2D]] = []
     
     var body: some View {
-        Map(position: $region) {
+        Text("\(bitsLength) bits precision")
+        Slider(
+            value: Binding<Double>(
+                get: {
+                    Double(bitsLength)
+                },
+                set: {
+                    bitsLength = Int($0)
+                }
+            ),
+            in: 0.0...50.0
+        )
+        Map(position: $cameraPosition) {
             ForEach(bounds) { bound in
                 MapPolyline(coordinates: bound)
                     .stroke(Color.blue, lineWidth: 1)
@@ -55,8 +62,34 @@ struct ContentView: View {
                 }
             }
         }
+        .onMapCameraChange {
+            updateBounds(coord: $0.camera.centerCoordinate)
+        }
     }
-    
+
+    private func updateBounds(coord: CLLocationCoordinate2D) {
+        let geoHash = GeoHash(
+            latitude: coord.latitude,
+            longitude: coord.longitude,
+            precision: .exact(digits: bitsLength)
+        )
+        let centerBound = geoHash.getBound().map({
+            CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+        })
+        var bounds: [[CLLocationCoordinate2D]] = [
+            centerBound + [centerBound[0]]
+        ]
+        for neighbor in geoHash.getNeighbors() {
+            let neighbors = neighbor.getBound().map({
+                CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+            })
+            bounds.append(
+                neighbors + [neighbors[0]]
+            )
+        }
+        self.bounds = bounds
+    }
+
     private func getCenter(in bound: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D {
         CLLocationCoordinate2D(
             latitude: (bound[1].latitude + bound[2].latitude) / 2,
