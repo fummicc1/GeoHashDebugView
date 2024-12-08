@@ -4,7 +4,5 @@ This is an example view for debugging of [GeoHashSwift](https://github.com/fummi
 
 ## Demo
 
-
-https://github.com/user-attachments/assets/3da427a5-40b8-4e73-81dc-97499361bc10
-
+https://github.com/user-attachments/assets/d326b9d8-46c6-4933-83a9-7345a05337a3
 
