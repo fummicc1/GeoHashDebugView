@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/fummicc1/GeoHashSwift",
       "state" : {
-        "branch" : "main",
-        "revision" : "caee0dcb2f8b1a91db82526b1e00ff353f72e839"
+        "revision" : "382682bb7b74a2988a3c6b10c04539ccc86a2110",
+        "version" : "0.0.3"
       }
     },
     {
