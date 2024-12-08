@@ -10,8 +10,14 @@ import MapKit
 import CoreLocation
 import GeoHashFramework
 
+@globalActor
+struct ComputationActor {
+    actor ActorType {}
+    static let shared = ActorType()
+}
+
 struct ContentView: View {
-    @State var bitsLength: Int = 10
+    @State var bitsLength: Int = 40
     @State private var cameraPosition = MapCameraPosition.region(
         MKCoordinateRegion(
             // Tokyo Station in Japan
@@ -23,6 +29,7 @@ struct ContentView: View {
         )
     )
 
+    @State private var isLoading = false
     @State private var bounds: [[CLLocationCoordinate2D]] = []
     
     var body: some View {
@@ -52,42 +59,68 @@ struct ContentView: View {
                             ).geoHash
                         )
                     }
-                ) {
-                    Text(
-                        GeoHash(
-                            latitude: getCenter(in: bound).latitude,
-                            longitude: getCenter(in: bound).longitude
-                        ).binary
-                    )
-                }
+                ) {}
             }
         }
-        .onMapCameraChange {
-            updateBounds(coord: $0.camera.centerCoordinate)
+        .onMapCameraChange { context in
+            Task {
+                if isLoading {
+                    return
+                }
+                isLoading = true
+                await updateBounds(coord: context.camera.centerCoordinate)
+                isLoading = false
+            }
         }
     }
 
-    private func updateBounds(coord: CLLocationCoordinate2D) {
-        let geoHash = GeoHash(
-            latitude: coord.latitude,
-            longitude: coord.longitude,
-            precision: .exact(digits: bitsLength)
-        )
-        let centerBound = geoHash.getBound().map({
-            CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
-        })
-        var bounds: [[CLLocationCoordinate2D]] = [
-            centerBound + [centerBound[0]]
+    @ComputationActor
+    private func updateBounds(coord: CLLocationCoordinate2D) async {
+        var geoHashes = await [
+            (
+                GeoHash(
+                    latitude: coord.latitude,
+                    longitude: coord.longitude,
+                    precision: .exact(digits: bitsLength)
+                ),
+                0
+            )
         ]
-        for neighbor in geoHash.getNeighbors() {
-            let neighbors = neighbor.getBound().map({
+        var bounds: [[CLLocationCoordinate2D]] = []
+        var seen: Set<GeoHash> = []
+        while geoHashes.count > 0 {
+            let (geoHash, depth) = geoHashes.removeFirst()
+            if depth >= 4 {
+                break
+            }
+            if seen.contains(geoHash) {
+                continue
+            }
+            seen.insert(geoHash)
+            let centerBound = geoHash.getBound().map({
                 CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
             })
             bounds.append(
-                neighbors + [neighbors[0]]
+                centerBound + [centerBound[0]]
             )
+            for neighbor in geoHash.getNeighbors() {
+                if seen.contains(neighbor) {
+                    continue
+                }
+                let neighborBound = neighbor.getBound().map({
+                    CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+                })
+                bounds.append(
+                    neighborBound + [neighborBound[0]]
+                )
+                geoHashes.append((neighbor, depth + 1))
+            }
         }
-        self.bounds = bounds
+        await MainActor.run { [bounds] in
+            withAnimation {
+                self.bounds = bounds
+            }
+        }
     }
 
     private func getCenter(in bound: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D {
