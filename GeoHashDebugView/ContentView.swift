@@ -17,6 +17,15 @@ struct ComputationActor {
     static let shared = ActorType()
 }
 
+struct ContentData: Identifiable {
+    var bound: [CLLocationCoordinate2D] = []
+    var geohash: GeoHash
+    
+    var id: GeoHash {
+        geohash
+    }
+}
+
 struct ContentView: View {
     @State var bitsLength: Int = 40
     @State private var cameraPosition = MapCameraPosition.region(
@@ -31,7 +40,7 @@ struct ContentView: View {
     )
 
     @State private var isLoading = false
-    @State private var bounds: [[CLLocationCoordinate2D]] = []
+    @State private var data: [ContentData] = []
     
     var body: some View {
         Text("\(bitsLength) bits precision")
@@ -47,18 +56,15 @@ struct ContentView: View {
             in: 0.0...50.0
         )
         Map(position: $cameraPosition) {
-            ForEach(bounds) { bound in
+            ForEach(data) {
+                let geohash = $0.geohash
+                let bound = $0.bound
                 MapPolyline(coordinates: bound)
                     .stroke(Color.blue, lineWidth: 1)
                 Annotation(
                     coordinate: getCenter(in: bound),
                     content: {
-                        Text(
-                            GeoHash(
-                                latitude: getCenter(in: bound).latitude,
-                                longitude: getCenter(in: bound).longitude
-                            ).geoHash
-                        )
+                        Text(geohash.geoHash)
                     }
                 ) {}
             }
@@ -89,7 +95,7 @@ struct ContentView: View {
                 ),
             ]
         )
-        var bounds: [[CLLocationCoordinate2D]] = []
+        var data: [ContentData] = []
         var seen: Set<GeoHash> = []
         while geoHashes.count > 0 {
             guard let (geoHash, depth) = geoHashes.popFirst() else {
@@ -105,8 +111,11 @@ struct ContentView: View {
             let centerBound = geoHash.getBound().map({
                 CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
             })
-            bounds.append(
-                centerBound + [centerBound[0]]
+            data.append(
+                .init(
+                    bound: centerBound + [centerBound[0]],
+                    geohash: geoHash
+                )
             )
             for neighbor in geoHash.getNeighbors() {
                 if seen.contains(neighbor) {
@@ -115,14 +124,17 @@ struct ContentView: View {
                 let neighborBound = neighbor.getBound().map({
                     CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
                 })
-                bounds.append(
-                    neighborBound + [neighborBound[0]]
+                data.append(
+                    .init(
+                        bound: neighborBound + [neighborBound[0]],
+                        geohash: neighbor
+                    )
                 )
                 geoHashes.append((neighbor, depth + 1))
             }
         }
-        await MainActor.run { [bounds] in
-            self.bounds = bounds
+        await MainActor.run { [data] in
+            self.data = data
         }
     }
 
