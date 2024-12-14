@@ -65,9 +65,12 @@ struct ContentView: View {
                     coordinate: getCenter(in: bound),
                     content: {
                         Text(geohash.geoHash)
-                            .font(.system(size: 24 * (1 - Double(geohash.precision.rawValue) / 50)))
+                            .fontSize(for: geohash)
                     }
-                ) {}
+                ) {
+                    Text(geohash.binary)
+                        .fontSize(for: geohash)
+                }
             }
         }
         .onMapCameraChange { context in
@@ -144,6 +147,12 @@ struct ContentView: View {
             latitude: (bound[1].latitude + bound[2].latitude) / 2,
             longitude: (bound[1].longitude + bound[0].longitude) / 2
         )
+    }
+}
+
+extension View {
+    func fontSize(for geohash: GeoHash) -> some View {
+        self.font(.system(size: 56 * (1 - Double(geohash.precision.rawValue) / 50)))
     }
 }
 
