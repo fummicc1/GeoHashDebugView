@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D3A2497E2D05F86D00AFF7FA /* GeoHashFramework in Frameworks */ = {isa = PBXBuildFile; productRef = D3A2497D2D05F86D00AFF7FA /* GeoHashFramework */; };
+		D3BDCA532D0DB6A000394F15 /* Collections in Frameworks */ = {isa = PBXBuildFile; productRef = D3BDCA522D0DB6A000394F15 /* Collections */; };
+		D3BDCA552D0DB6A000394F15 /* DequeModule in Frameworks */ = {isa = PBXBuildFile; productRef = D3BDCA542D0DB6A000394F15 /* DequeModule */; };
+		D3BDCA582D0DB6AF00394F15 /* GeoHashFramework in Frameworks */ = {isa = PBXBuildFile; productRef = D3BDCA572D0DB6AF00394F15 /* GeoHashFramework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,7 +71,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D3A2497E2D05F86D00AFF7FA /* GeoHashFramework in Frameworks */,
+				D3BDCA532D0DB6A000394F15 /* Collections in Frameworks */,
+				D3BDCA582D0DB6AF00394F15 /* GeoHashFramework in Frameworks */,
+				D3BDCA552D0DB6A000394F15 /* DequeModule in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -138,7 +142,9 @@
 			);
 			name = GeoHashDebugView;
 			packageProductDependencies = (
-				D3A2497D2D05F86D00AFF7FA /* GeoHashFramework */,
+				D3BDCA522D0DB6A000394F15 /* Collections */,
+				D3BDCA542D0DB6A000394F15 /* DequeModule */,
+				D3BDCA572D0DB6AF00394F15 /* GeoHashFramework */,
 			);
 			productName = GeoHashDebugView;
 			productReference = D3F921492CE8D84C00ED6B98 /* GeoHashDebugView.app */;
@@ -223,7 +229,8 @@
 			mainGroup = D3F921402CE8D84B00ED6B98;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				D3A2497C2D05F86D00AFF7FA /* XCRemoteSwiftPackageReference "GeoHashSwift" */,
+				D3BDCA512D0DB6A000394F15 /* XCRemoteSwiftPackageReference "swift-collections" */,
+				D3BDCA562D0DB6AF00394F15 /* XCRemoteSwiftPackageReference "GeoHashSwift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D3F9214A2CE8D84C00ED6B98 /* Products */;
@@ -625,7 +632,15 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		D3A2497C2D05F86D00AFF7FA /* XCRemoteSwiftPackageReference "GeoHashSwift" */ = {
+		D3BDCA512D0DB6A000394F15 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.4;
+			};
+		};
+		D3BDCA562D0DB6AF00394F15 /* XCRemoteSwiftPackageReference "GeoHashSwift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/fummicc1/GeoHashSwift";
 			requirement = {
@@ -636,9 +651,19 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		D3A2497D2D05F86D00AFF7FA /* GeoHashFramework */ = {
+		D3BDCA522D0DB6A000394F15 /* Collections */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = D3A2497C2D05F86D00AFF7FA /* XCRemoteSwiftPackageReference "GeoHashSwift" */;
+			package = D3BDCA512D0DB6A000394F15 /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = Collections;
+		};
+		D3BDCA542D0DB6A000394F15 /* DequeModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D3BDCA512D0DB6A000394F15 /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = DequeModule;
+		};
+		D3BDCA572D0DB6AF00394F15 /* GeoHashFramework */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D3BDCA562D0DB6AF00394F15 /* XCRemoteSwiftPackageReference "GeoHashSwift" */;
 			productName = GeoHashFramework;
 		};
 /* End XCSwiftPackageProductDependency section */

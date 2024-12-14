@@ -9,6 +9,7 @@ import SwiftUI
 import MapKit
 import CoreLocation
 import GeoHashFramework
+import DequeModule
 
 @globalActor
 struct ComputationActor {
@@ -76,21 +77,25 @@ struct ContentView: View {
 
     @ComputationActor
     private func updateBounds(coord: CLLocationCoordinate2D) async {
-        var geoHashes = await [
-            (
-                GeoHash(
-                    latitude: coord.latitude,
-                    longitude: coord.longitude,
-                    precision: .exact(digits: bitsLength)
+        var geoHashes = await Deque(
+            [
+                (
+                    GeoHash(
+                        latitude: coord.latitude,
+                        longitude: coord.longitude,
+                        precision: .exact(digits: bitsLength)
+                    ),
+                    0
                 ),
-                0
-            )
-        ]
+            ]
+        )
         var bounds: [[CLLocationCoordinate2D]] = []
         var seen: Set<GeoHash> = []
         while geoHashes.count > 0 {
-            let (geoHash, depth) = geoHashes.removeFirst()
-            if depth >= 4 {
+            guard let (geoHash, depth) = geoHashes.popFirst() else {
+                break
+            }
+            if depth > 4 {
                 break
             }
             if seen.contains(geoHash) {
@@ -117,9 +122,7 @@ struct ContentView: View {
             }
         }
         await MainActor.run { [bounds] in
-            withAnimation {
-                self.bounds = bounds
-            }
+            self.bounds = bounds
         }
     }
 
