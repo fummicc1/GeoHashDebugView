@@ -38,53 +38,93 @@ struct ContentView: View {
             span: MKCoordinateSpan(latitudeDelta: 360, longitudeDelta: 360)
         )
     )
-
+    
     @State private var isLoading = false
     @State private var data: [ContentData] = []
+    @State private var searchQuery: String = ""
+    @State private var searchedCoordinates: [CLLocationCoordinate2D] = []
     
     var body: some View {
-        Text("\(bitsLength) bits precision")
-        Slider(
-            value: Binding<Double>(
-                get: {
-                    Double(bitsLength)
-                },
-                set: {
-                    bitsLength = Int($0)
-                }
-            ),
-            in: 0.0...50.0
-        )
-        Map(position: $cameraPosition) {
-            ForEach(data) {
-                let geohash = $0.geohash
-                let bound = $0.bound
-                MapPolyline(coordinates: bound)
-                    .stroke(Color.blue, lineWidth: 1)
-                Annotation(
-                    coordinate: getCenter(in: bound),
-                    content: {
-                        Text(geohash.geoHash)
-                            .fontSize(for: geohash)
+        NavigationStack {
+            Slider(
+                value: Binding<Double>(
+                    get: {
+                        Double(bitsLength)
+                    },
+                    set: {
+                        bitsLength = Int($0)
                     }
-                ) {
-                    Text(geohash.binary)
-                        .fontSize(for: geohash)
+                ),
+                in: 0.0...50.0
+            ) {
+                Text("\(bitsLength) bits precision")
+            }
+            .padding()
+            Map(position: $cameraPosition) {
+                ForEach(data) {
+                    let geohash = $0.geohash
+                    let bound = $0.bound
+                    MapPolyline(coordinates: bound)
+                        .stroke(Color.blue, lineWidth: 1)
+                    Annotation(
+                        coordinate: getCenter(in: bound),
+                        content: {
+                            Text(geohash.geoHash)
+                                .fontSize(for: geohash.precision)
+                        }
+                    ) {
+                        Text(geohash.binary)
+                            .fontSize(for: geohash.precision)
+                    }
+                }
+                if !searchedCoordinates.isEmpty {
+                    Annotation(coordinate: getCenter(in: searchedCoordinates)) {
+                        Text(searchQuery).fontSize(for: .exact(digits: searchQuery.count * 5))
+                    } label:  {
+                        EmptyView()
+                    }
+
+                    MapPolygon(coordinates: searchedCoordinates)
+                        .foregroundStyle(Color.green.opacity(0.3))
                 }
             }
-        }
-        .onMapCameraChange { context in
-            Task {
-                if isLoading {
-                    return
+            .searchable(text: $searchQuery, prompt: "Enter GeoHash here")
+            .onMapCameraChange { context in
+                Task {
+                    if isLoading {
+                        return
+                    }
+                    isLoading = true
+                    await updateBounds(coord: context.camera.centerCoordinate)
+                    isLoading = false
                 }
-                isLoading = true
-                await updateBounds(coord: context.camera.centerCoordinate)
-                isLoading = false
+            }
+            .onChange(of: searchQuery) {
+                _,
+                _ in
+                Task {
+                    guard let geohash = GeoHash(
+                        geoHash: searchQuery,
+                        precision: .exact(
+                            digits: searchQuery.count * 5
+                        )
+                    ) else {
+                        return
+                    }
+                    let bounds = geohash.getBound()
+                    await MainActor.run {
+                        searchedCoordinates = bounds.map({
+                            CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+                        }) + [CLLocationCoordinate2D(
+                            latitude: bounds[0].latitude,
+                            longitude: bounds[0].longitude
+                        )]
+                    }
+                }
             }
         }
     }
-
+    
     @ComputationActor
     private func updateBounds(coord: CLLocationCoordinate2D) async {
         var geoHashes = await Deque(
@@ -94,7 +134,7 @@ struct ContentView: View {
                         latitude: coord.latitude,
                         longitude: coord.longitude,
                         precision: .exact(digits: bitsLength)
-                    ),
+                    )!,
                     0
                 ),
             ]
@@ -141,7 +181,7 @@ struct ContentView: View {
             self.data = data
         }
     }
-
+    
     private func getCenter(in bound: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D {
         CLLocationCoordinate2D(
             latitude: (bound[1].latitude + bound[2].latitude) / 2,
@@ -151,8 +191,8 @@ struct ContentView: View {
 }
 
 extension View {
-    func fontSize(for geohash: GeoHash) -> some View {
-        self.font(.system(size: 56 * (1 - Double(geohash.precision.rawValue) / 50)))
+    func fontSize(for precision: GeoHashBitsPrecision) -> some View {
+        self.font(.system(size: 56 * (1 - Double(precision.rawValue) / 50)))
     }
 }
 
