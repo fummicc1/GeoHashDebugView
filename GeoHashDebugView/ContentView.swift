@@ -86,6 +86,8 @@ struct ContentView: View {
 
                     MapPolygon(coordinates: searchedCoordinates)
                         .foregroundStyle(Color.green.opacity(0.3))
+                    MapPolyline(coordinates: searchedCoordinates)
+                        .stroke(Color.green, lineWidth: 3)
                 }
             }
             .searchable(text: $searchQuery, prompt: "Enter GeoHash here")
@@ -113,12 +115,29 @@ struct ContentView: View {
                     }
                     let bounds = geohash.getBound()
                     await MainActor.run {
-                        searchedCoordinates = bounds.map({
+                        let coordinates = bounds.map({
                             CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
                         }) + [CLLocationCoordinate2D(
                             latitude: bounds[0].latitude,
                             longitude: bounds[0].longitude
                         )]
+                        searchedCoordinates = coordinates
+
+                        // カメラを検索したgeohashの中心に移動
+                        let center = getCenter(in: coordinates)
+                        let latDelta = abs(bounds[1].latitude - bounds[2].latitude) * 2
+                        let lonDelta = abs(bounds[1].longitude - bounds[0].longitude) * 2
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            cameraPosition = .region(
+                                MKCoordinateRegion(
+                                    center: center,
+                                    span: MKCoordinateSpan(
+                                        latitudeDelta: max(latDelta, 0.001),
+                                        longitudeDelta: max(lonDelta, 0.001)
+                                    )
+                                )
+                            )
+                        }
                     }
                 }
             }
