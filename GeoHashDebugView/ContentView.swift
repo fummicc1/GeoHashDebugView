@@ -46,20 +46,6 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            Slider(
-                value: Binding<Double>(
-                    get: {
-                        Double(bitsLength)
-                    },
-                    set: {
-                        bitsLength = Int($0)
-                    }
-                ),
-                in: 0.0...50.0
-            ) {
-                Text("\(bitsLength) bits precision")
-            }
-            .padding()
             Map(position: $cameraPosition) {
                 ForEach(data) {
                     let geohash = $0.geohash
@@ -80,7 +66,7 @@ struct ContentView: View {
                 if !searchedCoordinates.isEmpty {
                     Annotation(coordinate: getCenter(in: searchedCoordinates)) {
                         Text(searchQuery).fontSize(for: .exact(digits: searchQuery.count * 5))
-                    } label:  {
+                    } label: {
                         EmptyView()
                     }
 
@@ -90,6 +76,7 @@ struct ContentView: View {
                         .stroke(Color.green, lineWidth: 3)
                 }
             }
+            .ignoresSafeArea()
             .searchable(text: $searchQuery, prompt: "Enter GeoHash here")
             .onMapCameraChange { context in
                 Task {
@@ -141,6 +128,33 @@ struct ContentView: View {
                     }
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                HStack(spacing: 12) {
+                    Image(systemName: "grid")
+                        .foregroundStyle(.secondary)
+
+                    Slider(
+                        value: Binding<Double>(
+                            get: { Double(bitsLength) },
+                            set: { bitsLength = Int($0) }
+                        ),
+                        in: 0.0...50.0
+                    )
+
+                    Text("\(bitsLength)")
+                        .font(.subheadline.weight(.semibold))
+                        .monospacedDigit()
+                        .frame(minWidth: 28, alignment: .trailing)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .glassEffect(.regular, in: .rect(cornerRadius: 20, style: .continuous))
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+            }
+            .navigationTitle("GeoHash Debug")
+            .navigationBarTitleDisplayMode(.inline)
+            .containerBackground(.clear, for: .navigation)
         }
     }
     
